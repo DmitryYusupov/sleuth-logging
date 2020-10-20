@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: sleuth-demo
+  sleuth:
+    baggage:
+      correlation-enabled: true
+      correlation-fields: #In order to automatically set the baggage values to Slf4j’s MDC
+        - userid
+      local-fields:
+        - userid
+
+logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{userid:-}]"
+
+    #spring:
+#  application:
+#    name: sleuth-demo
+#sleuth-demo,TRACE_ID,SPAN_ID,true
+#Trace id - unique id for ther user's request; will be carried across all service calls
+#Span ID - A span ID is a unique ID that represents part of the overall transaction. Each service
+    #participating within the transaction will have its own span ID. Span IDs are particularly relevant when you
+    #integrate with Zipkin to visualize your transactions.
+#  sleuth:
+#    propagation:
+#      tag:
+#        enabled: false
+#    The span ID represents a basic unit of work, for example sending an HTTP request. The trace ID contains a set of span IDs, forming a tree-like structure. The trace ID will remain the same as one microservice calls the next. Lets take a look at a simple example which uses Spring Cloud Sleuth to trace a request.
+
+#spring.sleuth:
+#  baggage:
+#    correlation-fields:
+#      - userId
+#    local-fields:
+#      - userId
+#Baggage are fields that are propagated with the trace, optionally out of process.
+#You can use properties to define fields that have no special configuration such as name mapping:
+#
+#  spring.sleuth.baggage.remote-fields is a list of header names to accept and propagate to remote services.
+#
+#  spring.sleuth.baggage.local-fields is a list of names to propagate locally
+#
+#  No prefixing applies with these keys. What you set is literally what is used.
+#
+#  A name set in either of these properties will result in a BaggageField of the same name.
+#
+#  In order to automatically set the baggage values to Slf4j’s MDC,
+  #  you have to set the spring.sleuth.baggage.correlation-fields property with a list o
+  # f whitelisted local or remote keys. E.g.
+#  spring.sleuth.baggage.correlation-fields=country-code will set the value of the country-code baggage into MDC.
