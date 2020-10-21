@@ -19,14 +19,24 @@ class UserController(
 ) {
 
     @PostMapping(value = ["post_1"])
-    fun postUser_1(@RequestBody
-                   user: User) {
+    fun postUser_1(
+        @RequestBody
+        user: User
+    ) {
         orderService.checkOrders(user)
     }
 
     @PostMapping(value = ["post_2"])
     @CreateBaggage(key = "userid", value = "@dataHolderBean.getData()")
     fun postUser_2(@RequestBody user: User) {
+        orderService.checkOrders()
+    }
+
+    @PostMapping(value = ["post_3"])
+    fun postUser_3(
+        @RequestBody
+        user: User
+    ) {
         orderService.checkOrders()
     }
 
