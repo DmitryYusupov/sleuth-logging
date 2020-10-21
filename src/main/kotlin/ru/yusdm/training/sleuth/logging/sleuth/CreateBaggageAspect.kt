@@ -29,18 +29,49 @@ class CreateBaggageAspect(beanFactory: BeanFactory) {
         it.setBeanResolver(BeanFactoryResolver(beanFactory))
     }
 
-  //  @Around("@annotation(ru.yusdm.training.sleuth.logging.sleuth.CreateBaggage)")
     @Around("execution(public * *(.., @ru.yusdm.training.sleuth.logging.sleuth.CreateBaggage (*), ..))")
-    fun logExecutionTime(joinPoint: ProceedingJoinPoint): Any? {
+    fun applyBaggageForAnnotatedArgument(joinPoint: ProceedingJoinPoint): Any? {
+        val annotationWithValue: Pair<CreateBaggage, Any>? = getAnnotationAndValue(joinPoint)
+
+        if (annotationWithValue != null) {
+            val (annotation, value) = annotationWithValue
+            val expression = annotation.value
+
+            val context = StandardEvaluationContext().also {
+                val splited: List<String> = expression.replaceFirst("#", "").split('.')
+                it.setVariable(splited.first(), value)
+            }
+
+            var mdcValueWasAssigned = false
+            val evaluatedValue = parser.parseExpression(expression).getValue(context, String::class.java)
+            if (evaluatedValue != null) {
+                MDC.put(
+                    annotation.key,
+                    evaluatedValue
+                )
+                mdcValueWasAssigned = true
+            }
+            val proceed = joinPoint.proceed()
+            if (mdcValueWasAssigned && annotation.excludeFromMdcAfterMethodExit) {
+                MDC.remove(annotation.key)
+            }
+
+            return proceed
+        } else {
+            return joinPoint.proceed()
+        }
+    }
+
+    @Around("@annotation(ru.yusdm.training.sleuth.logging.sleuth.CreateBaggage)")
+    fun applyBaggageForAnnotatedMethod(joinPoint: ProceedingJoinPoint): Any? {
 
         val signature = joinPoint.signature as MethodSignature
         val createBaggageAnnotation = signature.method.getAnnotation(CreateBaggage::class.java)
 
         var mdcValueWasAssigned = false
         if (createBaggageAnnotation.value.isNotBlank()) {
-            val evaluatedValue = getEvaluatedExpressionValue(
-                expression = createBaggageAnnotation.value, joinPoint = joinPoint
-            )
+            val evaluatedValue = getEvaluatedExpressionValueTakenFromBean(createBaggageAnnotation.value)
+
             if (evaluatedValue != null) {
                 MDC.put(
                     createBaggageAnnotation.key,
@@ -59,59 +90,27 @@ class CreateBaggageAspect(beanFactory: BeanFactory) {
         return proceed
     }
 
-    private fun getEvaluatedExpressionValue(expression: String, joinPoint: ProceedingJoinPoint): String? {
-        return when (getSpelResolverType(expression)) {
-            SpelResolverType.BEAN -> getEvaluatedExpressionValueTakenFromBean(expression)
-            SpelResolverType.ARGUMENT -> getEvaluatedExpressionValueTakenFromArguments(expression, joinPoint)
-        }
-    }
-
-    private enum class SpelResolverType {
-        BEAN, ARGUMENT
-    }
-
-    private fun getSpelResolverType(expression: String): SpelResolverType {
-        return if (expression.first() == '@') {
-            SpelResolverType.BEAN
-        } else {
-            SpelResolverType.ARGUMENT
-        }
-    }
-
     private fun getEvaluatedExpressionValueTakenFromBean(expression: String): String? {
         val e = parser.parseExpression(expression)
         return e.getValue(beanEvaluationContext, String::class.java)
     }
 
-    private fun getEvaluatedExpressionValueTakenFromArguments(
-        expression: String,
-        joinPoint: ProceedingJoinPoint
-    ): String? {
+    private fun getAnnotationAndValue(joinPoint: ProceedingJoinPoint): Pair<CreateBaggage, Any>? {
 
-        fun getAnnotatedArgumentValue(): Any? {
-            val signature = joinPoint.signature as MethodSignature
-            val parameters: Array<Parameter> = signature.method.parameters
+        val signature = joinPoint.signature as MethodSignature
+        val parameters: Array<Parameter> = signature.method.parameters
 
-            var value: Any? = null
-            for (i in 0..parameters.size) {
-                if (parameters[i].isAnnotationPresent(CreateBaggage::class.java)) {
-                    value = joinPoint.args[i]
-                    break
-                }
+        var value: Any? = null
+        for (i in 0..parameters.size) {
+            if (parameters[i].isAnnotationPresent(CreateBaggage::class.java)) {
+                value = joinPoint.args[i]
+                val annotation = parameters[i].getAnnotation(CreateBaggage::class.java)
+
+                return annotation to value
             }
-
-            return value
         }
 
-        return getAnnotatedArgumentValue()?.let { argValue ->
-            val context = StandardEvaluationContext().also {
-                val splited: List<String> = expression.replaceFirst("#", "").split('.')
-                it.setVariable(splited.first(), argValue)
-            }
-            val exp = parser.parseExpression(expression)
-
-            exp.getValue(context, String::class.java)
-        }
+        return null
     }
 
 }

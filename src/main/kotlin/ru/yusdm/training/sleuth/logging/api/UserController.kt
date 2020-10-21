@@ -20,9 +20,8 @@ class UserController(
 
     @PostMapping(value = ["post_1"])
     fun postUser_1(@RequestBody
-                   @CreateBaggage(key = "userid", value = "#{user.name}")
                    user: User) {
-        orderService.checkOrders()
+        orderService.checkOrders(user)
     }
 
     @PostMapping(value = ["post_2"])
