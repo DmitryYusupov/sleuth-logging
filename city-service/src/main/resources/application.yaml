@@ -1,0 +1,15 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: city-service
+  sleuth:
+    baggage:
+      correlation-enabled: true
+      correlation-fields: #In order to automatically set the baggage values to Slf4j’s MDC
+        - userid
+      local-fields:
+        - userid
+
+logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{userid:-}]"
