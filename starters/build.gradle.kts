@@ -1,5 +1,8 @@
 plugins {
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
     kotlin("jvm")
+    kotlin("plugin.spring")
 }
 
 group = "ru.yusdm.training"
@@ -10,8 +13,18 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springframework.cloud:spring-cloud-starter-sleuth")
 }
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+    }
+}
+
 
 tasks {
     compileKotlin {

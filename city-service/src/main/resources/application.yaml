@@ -13,3 +13,7 @@ spring:
         - userid
 
 logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{userid:-}]"
+
+app:
+  sleuth:
+    enabled: true
