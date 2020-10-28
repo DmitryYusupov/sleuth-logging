@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 private val log = CountryController::class.logger
 
 const val USER_ID = "userid"
+const val USER_ID2 = "x-b3-userid2"
 
 @RestController
 @RequestMapping("/api/countries")
@@ -25,6 +26,7 @@ class CountryController(private val countryService: CountryService) {
     @GetMapping(value = ["/{countryId}"])
     fun getCountryById(@PathVariable countryId: Long): ResponseEntity<Country> {
         setBaggageField(USER_ID, "TestUser ${counter.incrementAndGet()}")
+        setBaggageField(USER_ID2, "TestUser ${counter.incrementAndGet()}")
         log.info("User id is " + getBaggageField(USER_ID))
 
         return countryService.findByCountryId(countryId = countryId)?.let {
