@@ -11,7 +11,8 @@ spring:
         - userid
       local-fields:
         - userid
-
+      remote-fields:
+        - userid
 logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{userid:-}]"
 app:
   sleuth:

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import ru.yusdm.training.city.model.City
 import ru.yusdm.training.common.logger
+import ru.yusdm.training.common.sleuth.SleuthBaggageFieldMaintainer.getBaggageField
+import ru.yusdm.training.country.api.USER_ID
 import ru.yusdm.training.country.model.Country
 import java.net.URI
 
@@ -22,7 +24,7 @@ class CountryService(private val restTemplate: RestTemplate) {
 
     fun findByCountryId(countryId: Long): Country? {
 
-     //   log.info("User id in (findByCountryId) is " + getBaggageField(USER_ID))
+        log.info("User id in (findByCountryId) is " + getBaggageField(USER_ID))
 
         return countriesById[countryId]?.let {
             val response = restTemplate.exchange(
