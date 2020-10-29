@@ -10,13 +10,22 @@ import org.springframework.beans.factory.BeanFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cloud.sleuth.autoconfig.TraceAutoConfiguration
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.expression.BeanFactoryResolver
 import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 import org.springframework.stereotype.Component
 import java.lang.reflect.Parameter
 
-data class Zu (val i: Int)
+class Person {}
+
+@Configuration
+class Zu {
+    @Bean
+    fun person() = Person()
+}
+
 
 @Target(
     AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER,
@@ -47,10 +56,10 @@ object SleuthBaggageFieldMaintainer {
         return BaggageField.getByName(key)?.value ?: ""
     }
 }
-
+const val ANNOTATION ="ru.yusdm.training.common.sleuth.CreateBaggage"
 @Aspect
 @Component
-@ConditionalOnProperty(value = ["app.sleuth.enabled"], havingValue = "true", matchIfMissing = false)
+//@ConditionalOnProperty(value = ["app.sleuth.enabled"], havingValue = "true", matchIfMissing = false)
 @ConditionalOnBean(value = [TraceAutoConfiguration::class])
 class CreateBaggageAspect(beanFactory: BeanFactory) {
     private val parser = SpelExpressionParser()
@@ -59,7 +68,7 @@ class CreateBaggageAspect(beanFactory: BeanFactory) {
         it.setBeanResolver(BeanFactoryResolver(beanFactory))
     }
 
-    @Around("execution(public * *(.., @ru.yusdm.training.starter.CreateBaggage (*), ..))")
+    @Around("execution(public * *(.., @ru.yusdm.training.common.sleuth.CreateBaggage (*), ..))")
     fun applyBaggageForAnnotatedArgument(joinPoint: ProceedingJoinPoint): Any? {
         val annotationWithValue: Pair<CreateBaggage, Any>? = getAnnotationAndValue(joinPoint)
 
@@ -92,7 +101,7 @@ class CreateBaggageAspect(beanFactory: BeanFactory) {
         }
     }
 
-    @Around("@annotation(ru.yusdm.training.starter.CreateBaggage)")
+    @Around("@annotation(ru.yusdm.training.common.sleuth.CreateBaggage)")
     fun applyBaggageForAnnotatedMethod(joinPoint: ProceedingJoinPoint): Any? {
 
         val signature = joinPoint.signature as MethodSignature

@@ -1,10 +1,7 @@
 package ru.yusdm.training.city.api
 
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import ru.yusdm.training.city.model.City
 import ru.yusdm.training.city.service.CityService
 
@@ -14,6 +11,15 @@ class CityController(private val cityService: CityService) {
 
     @GetMapping
     fun getCitiesByCountry(@RequestParam countryId: Long): ResponseEntity<List<City>> {
-        return ResponseEntity.ok(cityService.getCitiesByCountry(countryId))
+        val result =  ResponseEntity.ok(cityService.getCitiesByCountry(countryId))
+        log.info("Before response in cities")
+        return result
+    }
+
+    @GetMapping("/{cityId}")
+    fun getCityDetails(@PathVariable cityId: Long) : City {
+        val city = cityService.getById(cityId)
+        cityService.logFirstCityDetails(city)
+        return city
     }
 }
